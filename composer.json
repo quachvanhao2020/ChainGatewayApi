@@ -1,0 +1,19 @@
+{
+    "name": "haoquach/chaingatewayapi",
+    "require": {
+    },
+    "autoload": {
+        "files": [
+            "init.php"
+        ]
+    },
+    "config": {
+        "process-timeout":0
+    },
+    "repositories": [
+    ],
+    "scripts": {
+        "serve": "php -S 0.0.0.0:8080",
+        "test": "phpunit"
+    }
+}
