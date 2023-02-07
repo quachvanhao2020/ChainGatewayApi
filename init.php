@@ -5,14 +5,33 @@ enum Network
     case BSC;
     case TRON;
 }
+function cover_to_network(string $key){
+    switch ($key) {
+        case "bsc":
+            return Network::BSC;
+            break;
+        case "tron":
+            return Network::TRON;
+            break;
+        case "eth":
+        default:
+        return Network::ETH;
+    }
+    throw new Exception();
+}
 class ChainGatewayApi{
     public $network;
     public $endpoint;
     public $key;
     public function __construct(string $key,Network $network = Network::ETH)
     {
-        $this->network = $network;
         $this->key = $key;
+        $this->setNetwork($network);
+    }
+    public function setNetwork(string|Network $network){
+        if(is_string($network)){
+            $network = cover_to_network($network);
+        }
         $endpoint = "https://eu.eth.chaingateway.io/v1";
         switch ($network) {
             case Network::BSC:
@@ -26,6 +45,7 @@ class ChainGatewayApi{
             $endpoint = "https://eu.eth.chaingateway.io/v1";
         }
         $this->endpoint = $endpoint;
+        $this->network = $network;
     }
     public function getToken(string $address){
         $curl = curl_init();
@@ -164,8 +184,11 @@ class ChainGatewayApi{
             CURLOPT_POSTFIELDS => json_encode($data)
         ));
         $response = curl_exec($curl);
-        curl_close($curl);
-        return json_decode($response,true);
+        $rs = json_decode($response,true);
+        if($rs["ok"] == false){
+            throw new Exception($rs["description"]);
+        }
+        return $rs;
     }
     public function getTransactionReceipt(string $txid){
         $curl = curl_init();
@@ -232,16 +255,30 @@ class ChainGatewayApi{
         ));
         $response = curl_exec($curl);
         curl_close($curl);
-        return json_decode($response,true);
+        $rs = json_decode($response,true);
+        if($rs["ok"] == false){
+            throw new Exception($rs["description"]);
+        }
+        return $rs;
     }
     public function exportAddress(string $address,string $password){
         $curl = curl_init();
         $data = 
         [
-            "ethaddress" => $address,
             "password" => $password,
             "apikey" => $this->key,
         ];
+        switch ($this->network) {
+            case Network::BSC:
+                $data["binancecoinaddress"] = $address;
+                break;
+            case Network::TRON:
+                $data["ethaddress"] = $address;
+                break;
+            case Network::ETH:
+            default:
+            $data["ethaddress"] = $address;
+        }
         curl_setopt_array($curl, array(
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
@@ -255,7 +292,21 @@ class ChainGatewayApi{
         ));
         $response = curl_exec($curl);
         curl_close($curl);
-        return json_decode($response,true);
+        $rs = json_decode($response,true);
+        if($rs["ok"] == false){
+            throw new Exception($rs["description"]);
+        }
+        switch ($this->network) {
+            case Network::BSC:
+                $rs["address"] = $rs["binancecoinaddress"];
+                break;
+            case Network::TRON:
+                break;
+            case Network::ETH:
+            default:
+                $rs["address"] = $rs["ethereumaddress"];
+        }
+        return $rs;
     }
     public function subscribeAddress(string $address,string $contract,string $url){
         $curl = curl_init();
@@ -389,7 +440,21 @@ class ChainGatewayApi{
         ));
         $response = curl_exec($curl);
         curl_close($curl);
-        return json_decode($response,true);
+        $rs = json_decode($response,true);
+        if($rs["ok"] == false){
+            throw new Exception($rs["description"]);
+        }
+        switch ($this->network) {
+            case Network::BSC:
+                $rs["address"] = $rs["binancecoinaddress"];
+                break;
+            case Network::TRON:
+                break;
+            case Network::ETH:
+            default:
+                $rs["address"] = $rs["ethereumaddress"];
+        }
+        return $rs;
     }
     public function deleteAddress(string $address,string $password){
         $curl = curl_init();
