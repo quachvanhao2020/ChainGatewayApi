@@ -5,7 +5,8 @@
     "autoload": {
         "files": [
             "init.php"
-        ]
+        ],
+        "psr-4": { "ChainGatewayApi\\": "src/" }
     },
     "config": {
         "process-timeout":0
