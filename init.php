@@ -14,8 +14,7 @@ function cover_to_network(string $key){
             return Network::TRON;
             break;
         case "eth":
-        default:
-        return Network::ETH;
+            return Network::ETH;
     }
-    throw new Exception();
+    throw new Exception($key);
 }

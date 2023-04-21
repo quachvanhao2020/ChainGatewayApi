@@ -24,8 +24,8 @@ class ChainGatewayApiV2{
                 $endpoint .= "/tron";
                 break;
             case \Network::ETH:
-            default:
-            $endpoint .= "/ethereum";
+                $endpoint .= "/ethereum";
+                break;
         }
         $this->endpoint = $endpoint;
         $this->network = $network;
@@ -125,16 +125,31 @@ class ChainGatewayApiV2{
         ));
         $response = curl_exec($curl);
         curl_close($curl);
-        return json_decode($response,true);
+        $rs = json_decode($response,true);
+        if(@$rs["ok"] == false){
+            throw new \Exception($response);
+        }
+        return $rs['data'];
     }
-    public function getTokenBalance(string $address,string $contract){
+    public function getTokenBalance(string $contract,string $address){
         $curl = curl_init();
+        $e = "erc20";
+        switch ($this->network) {
+            case \Network::BSC:
+                $e = "bep20";
+                break;
+            case \Network::TRON:
+                break;
+            case \Network::ETH:
+                $e = "erc20";
+                break;
+        }
         curl_setopt_array($curl, array(
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
                 'Authorization: '.$this->key
             ),
-            CURLOPT_URL => $this->endpoint."/balances/{$contract}/erc20/{$address}",
+            CURLOPT_URL => $this->endpoint."/balances/{$contract}/{$e}/{$address}",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_SSL_VERIFYPEER => 0,
@@ -144,7 +159,7 @@ class ChainGatewayApiV2{
         if(@$rs["ok"] == false){
             throw new \Exception($response);
         }
-        return $rs;
+        return $rs['data'];
     }
     public function getTransactionReceipt(string $txid){
         $curl = curl_init();
